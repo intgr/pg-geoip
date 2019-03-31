@@ -1,0 +1,24 @@
+[package]
+name = "pg-geoip"
+version = "0.1.0"
+authors = ["Marti Raudsepp <marti@juffo.org>"]
+edition = "2018"
+
+[build]
+rustflags = ["-C", "link-arg=-undefineddynamic_lookup"]
+
+[features]
+pg_allocator = []
+
+[lib]
+crate-type = ["cdylib"]
+
+[[bin]]
+name = "geoip"
+path = "src/bin.rs"
+
+[dependencies]
+pg-extern-attr = { version = "*", path = "../../src/pg-extend-rs/pg-extern-attr" }
+pg-extend = { version = "*", path = "../../src/pg-extend-rs/pg-extend" }
+geoip-sys = { version = "*", path = "../../own/rust-geoip/geoip-sys" }
+geoip = { version = "*", path = "../../own/rust-geoip" }
