@@ -20,5 +20,4 @@ path = "src/bin.rs"
 [dependencies]
 pg-extern-attr = { version = "*", path = "../../src/pg-extend-rs/pg-extern-attr" }
 pg-extend = { version = "*", path = "../../src/pg-extend-rs/pg-extend" }
-geoip-sys = { version = "*", path = "../../own/rust-geoip/geoip-sys" }
-geoip = { version = "*", path = "../../own/rust-geoip" }
+maxminddb = "*"
