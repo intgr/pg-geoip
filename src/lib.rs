@@ -1,3 +1,4 @@
+#[macro_use] extern crate lazy_static;
 extern crate pg_extend;
 extern crate pg_extern_attr;
 
@@ -11,14 +12,18 @@ use pg_extend::{pg_magic, pg_error};
 use pg_extern_attr::pg_extern;
 use std::error::Error;
 
+lazy_static! {
+    static ref geoip_db: Result<maxminddb::Reader<Vec<u8>>, MaxMindDBError>
+        = maxminddb::Reader::open_readfile("/usr/share/GeoIP/GeoLite2-Country.mmdb");
+}
+
 /// This tells Postgres this library is a Postgres extension
 pg_magic!(version: pg_sys::PG_VERSION_NUM);
 
 fn geoip_country_internal(value: CString) -> Result<Option<CString>, Box<Error>> {
-    let geoip = maxminddb::Reader::open_readfile("/usr/share/GeoIP/GeoLite2-Country.mmdb")?;
     let ip: IpAddr = FromStr::from_str(value.to_str()?)?;
 
-    let result: Result<geoip2::Country, MaxMindDBError> = geoip.lookup(ip);
+    let result: Result<geoip2::Country, MaxMindDBError> = geoip_db?.lookup(ip);
     match result {
         Ok(ret) => Ok(Some(CString::new(ret.country.unwrap().iso_code.unwrap())?)),
         Err(AddressNotFoundError(_e)) => Ok(None),
