@@ -13,9 +13,9 @@ pg_allocator = []
 [lib]
 crate-type = ["cdylib"]
 
-# [[bin]]
-# name = "pg-geoip"
-# path = "src/bin.rs"
+[[bin]]
+name = "pg-geoip"
+path = "src/bin.rs"
 
 [dependencies]
 pg-extern-attr = { version = "*", path = "../../src/pg-extend-rs/pg-extern-attr" }

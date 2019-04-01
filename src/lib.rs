@@ -1,4 +1,4 @@
-#[macro_use] extern crate lazy_static;
+extern crate lazy_static;
 extern crate pg_extend;
 extern crate pg_extern_attr;
 
@@ -12,7 +12,7 @@ use pg_extend::{pg_magic, pg_error};
 use pg_extern_attr::pg_extern;
 use std::error::Error;
 
-lazy_static! {
+lazy_static::lazy_static! {
     static ref geoip_db: Result<maxminddb::Reader<Vec<u8>>, MaxMindDBError>
         = maxminddb::Reader::open_readfile("/usr/share/GeoIP/GeoLite2-Country.mmdb");
 }
