@@ -14,10 +14,11 @@ pg_allocator = []
 crate-type = ["cdylib"]
 
 [[bin]]
-name = "geoip"
+name = "pg-geoip"
 path = "src/bin.rs"
 
 [dependencies]
 pg-extern-attr = { version = "*", path = "../../src/pg-extend-rs/pg-extern-attr" }
 pg-extend = { version = "*", path = "../../src/pg-extend-rs/pg-extend" }
 maxminddb = "*"
+lazy_static = "*"
