@@ -17,24 +17,27 @@ const DEFAULT_DB_PATH: &str = "/usr/share/GeoIP/GeoLite2-Country.mmdb";
 
 /// Cache the database instance on first open
 struct DatabaseCache {
-    db: Option<Arc<maxminddb::Reader<Vec<u8>>>>
+    db: Mutex<Option<Arc<maxminddb::Reader<Vec<u8>>>>>
 }
 
 impl DatabaseCache {
     fn new() -> DatabaseCache {
-        DatabaseCache { db: None }
+        DatabaseCache { db: Mutex::new(None) }
     }
 
-    fn get(&mut self) -> Result<Arc<maxminddb::Reader<Vec<u8>>>, MaxMindDBError> {
-        if let None = self.db {
-            self.db = Some(Arc::new(maxminddb::Reader::open_readfile(DEFAULT_DB_PATH)?));
+    fn get(&self) -> Result<Arc<maxminddb::Reader<Vec<u8>>>, Box<Error>> {
+        let mut db = self.db.lock().unwrap();
+
+        if let None = *db {
+            *db = Some(Arc::new(maxminddb::Reader::open_readfile(DEFAULT_DB_PATH)?));
         }
-        Ok(self.db.as_ref().unwrap().clone())
+
+        return Ok(db.as_ref().unwrap().clone());
     }
 }
 
 lazy_static::lazy_static! {
-    static ref DB_MANAGER: Mutex<DatabaseCache> = Mutex::new(DatabaseCache::new());
+    static ref DB_MANAGER: DatabaseCache = DatabaseCache::new();
 }
 
 /// This tells Postgres this library is a Postgres extension
@@ -42,7 +45,7 @@ pg_magic!(version: pg_sys::PG_VERSION_NUM);
 
 fn geoip_country_internal(value: CString) -> Result<Option<CString>, Box<Error>> {
     let ip: IpAddr = FromStr::from_str(value.to_str()?)?;
-    let geoip_db = DB_MANAGER.lock().unwrap().get()?;
+    let geoip_db = DB_MANAGER.get()?;
 
     let result: Result<geoip2::Country, MaxMindDBError> = geoip_db.lookup(ip);
     match result {
@@ -81,5 +84,21 @@ mod tests {
                    Some(CString::new("US").unwrap()));
         assert_eq!(geoip_country_internal(CString::new("127.0.0.1").unwrap()).unwrap(),
                    None);
+    }
+
+    #[test]
+    fn test_cache() {
+        // DB instance is not initialized at first.
+        let c = DatabaseCache::new();
+        assert!(c.db.lock().unwrap().is_none());
+
+        // Get first intsance, which initializes it.
+        let db = c.get().unwrap();
+        assert!(c.db.lock().unwrap().is_some());
+        assert_eq!(Arc::strong_count(&db), 2);
+
+        // Make sure references are shared
+        let db2 = c.get().unwrap();
+        assert_eq!(Arc::strong_count(&db2), 3);
     }
 }
