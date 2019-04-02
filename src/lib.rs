@@ -16,13 +16,13 @@ use std::sync::{Arc, Mutex};
 const DEFAULT_DB_PATH: &str = "/usr/share/GeoIP/GeoLite2-Country.mmdb";
 
 /// Cache the database instance on first open
-struct DatabaseCache {
+struct InstanceCache {
     db: Mutex<Option<Arc<maxminddb::Reader<Vec<u8>>>>>
 }
 
-impl DatabaseCache {
-    fn new() -> DatabaseCache {
-        DatabaseCache { db: Mutex::new(None) }
+impl InstanceCache {
+    fn new() -> InstanceCache {
+        InstanceCache { db: Mutex::new(None) }
     }
 
     fn get(&self) -> Result<Arc<maxminddb::Reader<Vec<u8>>>, Box<Error>> {
@@ -37,7 +37,7 @@ impl DatabaseCache {
 }
 
 lazy_static::lazy_static! {
-    static ref DB_MANAGER: DatabaseCache = DatabaseCache::new();
+    static ref DB_MANAGER: InstanceCache = InstanceCache::new();
 }
 
 /// This tells Postgres this library is a Postgres extension
@@ -89,7 +89,7 @@ mod tests {
     #[test]
     fn test_cache() {
         // DB instance is not initialized at first.
-        let c = DatabaseCache::new();
+        let c = InstanceCache::new();
         assert!(c.db.lock().unwrap().is_none());
 
         // Get first intsance, which initializes it.
