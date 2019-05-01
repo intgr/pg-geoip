@@ -58,11 +58,11 @@ fn geoip_country_internal(value: &str) -> Result<Option<String>, Box<Error>> {
 }
 
 #[pg_extern]
-fn geoip_country(value: String) -> String {
+fn geoip_country(value: String) -> Option<String> {
     match geoip_country_internal(&value)
     {
-        Ok(Some(result)) => result,
-        Ok(None) => "N/A".to_string(), // FIXME return SQL NULL here
+        // Some(String) or None
+        Ok(result) => result,
         Err(e) => {
             pg_error::log(
                 pg_error::Level::Error,
@@ -71,7 +71,7 @@ fn geoip_country(value: String) -> String {
                 module_path!(),
                 e.description()
             );
-            return "N/A".to_string()
+            return None
         }
     }
 }
