@@ -2,16 +2,15 @@ extern crate lazy_static;
 extern crate pg_extend;
 extern crate pg_extern_attr;
 
-use std::ffi::CString;
+use std::error::Error;
 use std::net::IpAddr;
 use std::str::FromStr;
+use std::sync::{Arc, Mutex};
 
 use maxminddb::{geoip2, MaxMindDBError};
 use maxminddb::MaxMindDBError::AddressNotFoundError;
-use pg_extend::{pg_magic, pg_error};
+use pg_extend::{pg_error, pg_magic};
 use pg_extern_attr::pg_extern;
-use std::error::Error;
-use std::sync::{Arc, Mutex};
 
 const DEFAULT_DB_PATH: &str = "/usr/share/GeoIP/GeoLite2-Country.mmdb";
 
@@ -43,24 +42,24 @@ lazy_static::lazy_static! {
 /// This tells Postgres this library is a Postgres extension
 pg_magic!(version: pg_sys::PG_VERSION_NUM);
 
-fn geoip_country_internal(value: CString) -> Result<Option<CString>, Box<Error>> {
-    let ip: IpAddr = FromStr::from_str(value.to_str()?)?;
+fn geoip_country_internal(value: &str) -> Result<Option<String>, Box<Error>> {
+    let ip: IpAddr = FromStr::from_str(value)?;
     let geoip_db = DB_MANAGER.get()?;
 
     let result: Result<geoip2::Country, MaxMindDBError> = geoip_db.lookup(ip);
     match result {
-        Ok(ret) => Ok(Some(CString::new(ret.country.unwrap().iso_code.unwrap())?)),
+        Ok(ret) => Ok(ret.country.unwrap().iso_code),
         Err(AddressNotFoundError(_e)) => Ok(None),
         Err(e) => Err(e.into())
     }
 }
 
 #[pg_extern]
-fn geoip_country(value: CString) -> CString {
-    match geoip_country_internal(value)
+fn geoip_country(value: String) -> String {
+    match geoip_country_internal(&value)
     {
         Ok(Some(result)) => result,
-        Ok(None) => CString::new("N/A").unwrap(), // FIXME return SQL NULL here
+        Ok(None) => "N/A".to_string(), // FIXME return SQL NULL here
         Err(e) => {
             pg_error::log(
                 pg_error::Level::Error,
@@ -69,7 +68,7 @@ fn geoip_country(value: CString) -> CString {
                 module_path!(),
                 e.description()
             );
-            return CString::new("N/A").unwrap()
+            return "N/A".to_string()
         }
     }
 }
@@ -80,9 +79,9 @@ mod tests {
 
     #[test]
     fn test_country() {
-        assert_eq!(geoip_country_internal(CString::new("8.8.8.8").unwrap()).unwrap(),
-                   Some(CString::new("US").unwrap()));
-        assert_eq!(geoip_country_internal(CString::new("127.0.0.1").unwrap()).unwrap(),
+        assert_eq!(geoip_country_internal("8.8.8.8").unwrap(),
+                   Some("US".to_string()));
+        assert_eq!(geoip_country_internal("127.0.0.1").unwrap(),
                    None);
     }
 
