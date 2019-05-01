@@ -14,9 +14,12 @@ use pg_extern_attr::pg_extern;
 
 const DEFAULT_DB_PATH: &str = "/usr/share/GeoIP/GeoLite2-Country.mmdb";
 
+/// Create an alias for GeoIP database type because this notation is UGLYYY
+type GeoDB = maxminddb::Reader<Vec<u8>>;
+
 /// Cache the database instance on first open
 struct InstanceCache {
-    db: Mutex<Option<Arc<maxminddb::Reader<Vec<u8>>>>>
+    db: Mutex<Option<Arc<GeoDB>>>
 }
 
 impl InstanceCache {
@@ -24,11 +27,11 @@ impl InstanceCache {
         InstanceCache { db: Mutex::new(None) }
     }
 
-    fn get(&self) -> Result<Arc<maxminddb::Reader<Vec<u8>>>, Box<Error>> {
+    fn get(&self) -> Result<Arc<GeoDB>, Box<Error>> {
         let mut db = self.db.lock().unwrap();
 
         if let None = *db {
-            *db = Some(Arc::new(maxminddb::Reader::open_readfile(DEFAULT_DB_PATH)?));
+            *db = Some(Arc::new(GeoDB::open_readfile(DEFAULT_DB_PATH)?));
         }
 
         return Ok(db.as_ref().unwrap().clone());
