@@ -56,11 +56,11 @@ fn geoip_country_internal(value: CString) -> Result<Option<CString>, Box<Error>>
 }
 
 #[pg_extern]
-fn geoip_country(value: CString) -> CString {
+fn geoip_country(value: CString) -> Option<CString> {
     match geoip_country_internal(value)
     {
-        Ok(Some(result)) => result,
-        Ok(None) => CString::new("N/A").unwrap(), // FIXME return SQL NULL here
+        // Some(CString) or None
+        Ok(result) => result,
         Err(e) => {
             pg_error::log(
                 pg_error::Level::Error,
@@ -69,7 +69,7 @@ fn geoip_country(value: CString) -> CString {
                 module_path!(),
                 e.description()
             );
-            return CString::new("N/A").unwrap()
+            return None
         }
     }
 }
