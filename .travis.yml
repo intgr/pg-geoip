@@ -1,0 +1,25 @@
+language: rust
+
+dist: xenial
+
+sudo: required
+
+rust:
+  - nightly
+#  - beta
+#  - stable
+
+cache: cargo
+
+env:
+  PG_INCLUDE_PATH=/usr/include/postgresql/10/server
+
+before_script:
+  - cat /etc/GeoIP.conf
+  - sudo geoipupdate
+
+addons:
+  apt:
+    packages:
+      - geoipupdate
+      - postgresql-server-dev-all

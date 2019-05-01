@@ -18,7 +18,7 @@ name = "pg-geoip"
 path = "src/bin.rs"
 
 [dependencies]
-pg-extern-attr = { version = "*", path = "../../src/pg-extend-rs/pg-extern-attr" }
-pg-extend = { version = "*", path = "../../src/pg-extend-rs/pg-extend" }
+pg-extern-attr = { version = "*", git = "https://github.com/bluejekyll/pg-extend-rs" }
+pg-extend = { version = "*", git = "https://github.com/bluejekyll/pg-extend-rs" }
 maxminddb = "*"
 lazy_static = "*"

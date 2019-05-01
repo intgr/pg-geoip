@@ -12,7 +12,7 @@ use maxminddb::MaxMindDBError::AddressNotFoundError;
 use pg_extend::{pg_error, pg_magic};
 use pg_extern_attr::pg_extern;
 
-const DEFAULT_DB_PATH: &str = "/usr/share/GeoIP/GeoLite2-Country.mmdb";
+const DEFAULT_DB_PATH: &str = "/var/lib/GeoIP/GeoLite2-Country.mmdb";
 
 /// Create an alias for GeoIP database type because this notation is UGLYYY
 type GeoDB = maxminddb::Reader<Vec<u8>>;
