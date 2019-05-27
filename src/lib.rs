@@ -42,7 +42,6 @@ lazy_static::lazy_static! {
     static ref DB_MANAGER: InstanceCache = InstanceCache::new();
 }
 
-/// This tells Postgres this library is a Postgres extension
 pg_magic!(version: pg_sys::PG_VERSION_NUM);
 
 fn geoip_country_internal(value: &str) -> Result<Option<String>, Box<Error>> {
