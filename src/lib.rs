@@ -9,7 +9,7 @@ use std::sync::{Arc, Mutex};
 
 use maxminddb::MaxMindDBError::AddressNotFoundError;
 use maxminddb::{geoip2, MaxMindDBError};
-use pg_extend::{pg_error, pg_magic};
+use pg_extend::{debug, error, pg_magic};
 use pg_extern_attr::pg_extern;
 
 const DEFAULT_DB_PATH: &str = "/usr/share/GeoIP/GeoLite2-Country.mmdb";
@@ -60,17 +60,15 @@ fn geoip_country_internal(value: &str) -> Result<Option<String>, Box<Error>> {
 
 #[pg_extern]
 fn geoip_country(value: String) -> Option<String> {
-    match geoip_country_internal(&value) {
+    let ret = geoip_country_internal(&value);
+
+    debug!("ret={:?}", ret);
+
+    match ret {
         // Some(String) or None
         Ok(result) => result,
         Err(e) => {
-            pg_error::log(
-                pg_error::Level::Error,
-                file!(),
-                line!(),
-                module_path!(),
-                e.description(),
-            );
+            error!("{}", e);
             None
         }
     }
