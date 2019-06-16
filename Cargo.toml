@@ -4,9 +4,6 @@ version = "0.1.0"
 authors = ["Marti Raudsepp <marti@juffo.org>"]
 edition = "2018"
 
-[build]
-rustflags = ["-C", "link-arg=-undefineddynamic_lookup"]
-
 [features]
 pg_allocator = []
 
