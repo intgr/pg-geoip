@@ -7,8 +7,8 @@ use std::net::IpAddr;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
-use maxminddb::{geoip2, MaxMindDBError};
 use maxminddb::MaxMindDBError::AddressNotFoundError;
+use maxminddb::{geoip2, MaxMindDBError};
 use pg_extend::{pg_error, pg_magic};
 use pg_extern_attr::pg_extern;
 
@@ -19,12 +19,14 @@ type GeoDB = maxminddb::Reader<Vec<u8>>;
 
 /// Cache the database instance on first open
 struct InstanceCache {
-    db: Mutex<Option<Arc<GeoDB>>>
+    db: Mutex<Option<Arc<GeoDB>>>,
 }
 
 impl InstanceCache {
     fn new() -> InstanceCache {
-        InstanceCache { db: Mutex::new(None) }
+        InstanceCache {
+            db: Mutex::new(None),
+        }
     }
 
     fn get(&self) -> Result<Arc<GeoDB>, Box<Error>> {
@@ -52,14 +54,13 @@ fn geoip_country_internal(value: &str) -> Result<Option<String>, Box<Error>> {
     match result {
         Ok(ret) => Ok(ret.country.unwrap().iso_code),
         Err(AddressNotFoundError(_e)) => Ok(None),
-        Err(e) => Err(e.into())
+        Err(e) => Err(e.into()),
     }
 }
 
 #[pg_extern]
 fn geoip_country(value: String) -> Option<String> {
-    match geoip_country_internal(&value)
-    {
+    match geoip_country_internal(&value) {
         // Some(String) or None
         Ok(result) => result,
         Err(e) => {
@@ -68,9 +69,9 @@ fn geoip_country(value: String) -> Option<String> {
                 file!(),
                 line!(),
                 module_path!(),
-                e.description()
+                e.description(),
             );
-            return None
+            None
         }
     }
 }
@@ -81,10 +82,11 @@ mod tests {
 
     #[test]
     fn test_country() {
-        assert_eq!(geoip_country_internal("8.8.8.8").unwrap(),
-                   Some("US".to_string()));
-        assert_eq!(geoip_country_internal("127.0.0.1").unwrap(),
-                   None);
+        assert_eq!(
+            geoip_country_internal("8.8.8.8").unwrap(),
+            Some("US".to_string())
+        );
+        assert_eq!(geoip_country_internal("127.0.0.1").unwrap(), None);
     }
 
     #[test]
