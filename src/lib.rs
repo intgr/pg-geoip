@@ -29,7 +29,7 @@ impl InstanceCache {
         }
     }
 
-    fn get(&self) -> Result<Arc<GeoDB>, Box<Error>> {
+    fn get(&self) -> Result<Arc<GeoDB>, Box<dyn Error>> {
         let mut db = self.db.lock().unwrap();
 
         if let None = *db {
@@ -46,7 +46,7 @@ lazy_static::lazy_static! {
 
 pg_magic!(version: pg_sys::PG_VERSION_NUM);
 
-fn geoip_country_internal(value: &str) -> Result<Option<String>, Box<Error>> {
+fn geoip_country_internal(value: &str) -> Result<Option<String>, Box<dyn Error>> {
     let ip: IpAddr = FromStr::from_str(value)?;
     let geoip_db = DB_MANAGER.get()?;
 
